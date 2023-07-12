@@ -1,0 +1,38 @@
+name: Build spng
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v8
+      with:
+        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+        vcpkgGitCommitId: '2021.05.12'
+        setupOnly: true
+
+    - name: Install ZLIB with vcpkg
+      run: .\vcpkg\vcpkg.exe install zlib:x64-windows
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+
+    - name: Build spng
+      run: |
+        cd build
+        cmake --build . --config Release
